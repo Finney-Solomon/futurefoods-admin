@@ -5,7 +5,7 @@ import { Blog, Recipe } from "../types/api";
 //  (import.meta as any)?.env?.VITE_API_BASE?.replace(/\/+$/, "") ||
 //  "http://localhost:5999"; // no trailing slash, consistent root
 
- const API_BASE_URL = "https://futurefoods-api.vercel.app/api";
+ const API_BASE_URL = "https://futurefoods-api.vercel.app";
 type Json =
  | Record<string, any>
  | any[]
