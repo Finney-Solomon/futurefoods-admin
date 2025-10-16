@@ -8,6 +8,7 @@ import { Products } from './components/sections/Products';
 import { Orders } from './components/sections/Orders';
 import { ToastContainer, useToast } from './components/ui/Toast';
 import { Blogs } from './components/sections/Blogs';
+import { Recipes } from './components/sections/Recipes';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,9 @@ const AppContent: React.FC = () => {
         return <Orders />;
       case 'blogs':
         return <Blogs />;
+      case 'recipes':
+        return <Recipes />;
+        
       default:
         return <Dashboard />;
     }

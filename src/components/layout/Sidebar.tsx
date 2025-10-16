@@ -5,7 +5,10 @@ import {
   Tag, 
   ShoppingBag, 
   LogOut,
-  Store
+  Store,
+  ShoppingCart,
+  FileText,
+  UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -18,12 +21,11 @@ const navigation = [
   { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
   { id: 'categories', name: 'Categories', icon: Tag },
   { id: 'products', name: 'Products', icon: Package },
-  { id: 'orders', name: 'Orders', icon: ShoppingBag },
-  { id: 'blogs', name: 'Blogs', icon: ShoppingBag },
-  { id: 'recipes', name: 'Recipes', icon: ShoppingBag },
-
-
+  { id: 'orders', name: 'Orders', icon: ShoppingCart },
+  { id: 'blogs', name: 'Blogs', icon: FileText },
+  { id: 'recipes', name: 'Recipes', icon: UtensilsCrossed },
 ];
+
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
   const { user, logout } = useAuth();

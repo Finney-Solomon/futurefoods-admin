@@ -192,3 +192,23 @@ export interface BlogAdminQuery extends BlogPublicQuery {
   includeInactive?: boolean; // default false
   allStatus?: boolean;       // default false (otherwise only published)
 }
+
+
+export type Recipe = {
+  _id: string;
+  title: string;
+  slug: string;
+  imageUrl?: string;
+  shortDescription: string;
+  ingredients: string[];
+  steps: string[];
+  prepTimeMins?: number;
+  cookTimeMins?: number;
+  servings?: number;
+  tags?: string[];
+  category?: { _id: string; name: string; slug: string };
+  isActive: boolean;
+  featured: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
