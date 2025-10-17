@@ -27,7 +27,7 @@ class ApiService {
  }
 
  private buildUrl(path: string, qs?: Record<string, any>) {
-  const base = `${API_BASE_URL}/api`;
+  const base = `${API_BASE_URL}/`;
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
   if (!qs) return url;
   const sp = new URLSearchParams();
