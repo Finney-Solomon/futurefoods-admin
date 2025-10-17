@@ -71,14 +71,14 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-600">
               <strong>Demo Credentials:</strong><br />
               Email: admin@example.com<br />
               Password: admin123<br />
               <em className="text-xs">Note: This user has 'user' role but can access admin features for demo purposes.</em>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
