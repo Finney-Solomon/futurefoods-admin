@@ -33,12 +33,14 @@ type FeaturedView = "all" | "featured";
 const formatINR = (paise?: number) => {
   if (typeof paise !== "number") return "—";
   const rupees = paise / 100;
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("sv-SE", {
     style: "currency",
-    currency: "INR",
+    currency: "SEK",
     maximumFractionDigits: 2,
   }).format(rupees);
 };
+
+
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[] | { items: Product[] }>([]);
@@ -225,9 +227,8 @@ export const Products: React.FC = () => {
             <button
               type="button"
               onClick={() => setFeaturedView("all")}
-              className={`px-3 py-2 text-sm ${
-                featuredView === "all" ? "bg-gray-100 font-medium" : "bg-white"
-              }`}
+              className={`px-3 py-2 text-sm ${featuredView === "all" ? "bg-gray-100 font-medium" : "bg-white"
+                }`}
               aria-pressed={featuredView === "all"}
             >
               All
@@ -235,11 +236,10 @@ export const Products: React.FC = () => {
             <button
               type="button"
               onClick={() => setFeaturedView("featured")}
-              className={`px-3 py-2 text-sm flex items-center gap-1 ${
-                featuredView === "featured"
-                  ? "bg-yellow-50 text-yellow-700 font-medium"
-                  : "bg-white"
-              }`}
+              className={`px-3 py-2 text-sm flex items-center gap-1 ${featuredView === "featured"
+                ? "bg-yellow-50 text-yellow-700 font-medium"
+                : "bg-white"
+                }`}
               aria-pressed={featuredView === "featured"}
               title="Show only Featured products"
             >
@@ -340,11 +340,10 @@ export const Products: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        product.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.isActive
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                        }`}
                     >
                       {product.isActive ? "Active" : "Inactive"}
                     </span>
@@ -353,11 +352,10 @@ export const Products: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-                          product.featuredProducts
-                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                            : "bg-gray-50 text-gray-600 border-gray-200"
-                        }`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${product.featuredProducts
+                          ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                          : "bg-gray-50 text-gray-600 border-gray-200"
+                          }`}
                       >
                         {product.featuredProducts ? "Featured" : "—"}
                       </span>
@@ -432,7 +430,7 @@ export const Products: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter product description"
               rows={8}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
               required
             />
           </div>
@@ -446,7 +444,7 @@ export const Products: React.FC = () => {
               required
             />
             <Input
-              label="Price (₹)"
+              label="Price kr"
               type="number"
               step="0.01"
               value={formData.pricePaise}
@@ -511,16 +509,16 @@ export const Products: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, featuredProducts: e.target.checked })
                 }
-                className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 w-5 h-5"
+                className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 w-4 h-4"
               />
-              <span className="text-lg text-gray-700 flex items-center gap-1">
+              <span className="text-[14px] text-gray-700 flex items-center gap-1">
                 {/* <Star className="w-8 h-8" /> */}
                 Mark this product as Featured
               </span>
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 pb-8">
             <Button type="submit" loading={formLoading} className="flex-1">
               {editingProduct ? "Update" : "Create"} Product
             </Button>

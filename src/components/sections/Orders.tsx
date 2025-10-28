@@ -6,6 +6,8 @@ import { Select } from '../ui/Select';
 import { apiService } from '../../services/api';
 import { useToast } from '../ui/Toast';
 import { RightDrawerModal } from '../layout/RightDrawerModal';
+import { StatusSelect } from '../StatusSelect';
+import { formatINR } from '../../CommonFunctions';
 
 interface OrderItem {
   product: {
@@ -90,13 +92,13 @@ export const Orders: React.FC = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order._id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === '' || order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -118,7 +120,7 @@ export const Orders: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
         <p className="text-gray-600">Manage customer orders</p>
@@ -138,16 +140,23 @@ export const Orders: React.FC = () => {
               />
             </div>
             <div className="w-full sm:w-48">
-              <Select
+              {/* <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 options={statusOptions}
+              /> */}
+              <StatusSelect
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={statusOptions}
               />
+
             </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
+          {/* <div className="max-h-[590px] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -219,6 +228,92 @@ export const Orders: React.FC = () => {
               })}
             </tbody>
           </table>
+          </div> */}
+          <div className="relative">
+            {/* Scrollable container */}
+            <div className="max-h-[568px] overflow-y-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Order ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Items
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredOrders.map((order) => {
+                    const StatusIcon = getStatusIcon(order.status);
+                    return (
+                      <tr key={order._id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{order._id.slice(-8)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {order.user.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {order.user.email}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {order.items.length} item
+                          {order.items.length !== 1 ? 's' : ''}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatINR(order.amountPaise / 100) || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewOrder(order)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {filteredOrders.length === 0 && (
             <div className="p-6 text-center text-gray-500">
               {searchTerm || statusFilter ? 'No orders found matching your criteria' : 'No orders found'}
@@ -232,7 +327,7 @@ export const Orders: React.FC = () => {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         title={`Order #${selectedOrder?._id.slice(-8)}`}
-        // maxWidth="lg"
+      // maxWidth="lg"
       >
         {selectedOrder && (
           <div className="space-y-6">
@@ -275,12 +370,12 @@ export const Orders: React.FC = () => {
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{item.product.name}</div>
                       <div className="text-sm text-gray-500">
-                        Quantity: {item.quantity} × ₹{(item.pricePaise / 100).toFixed(2)}
+                        Quantity: {item.quantity} × {formatINR(item.pricePaise / 100)}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">
-                        ₹{((item.quantity * item.pricePaise) / 100).toFixed(2)}
+                        {formatINR((item.quantity * item.pricePaise) / 100)}
                       </div>
                     </div>
                   </div>
@@ -292,7 +387,7 @@ export const Orders: React.FC = () => {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center text-lg font-semibold">
                 <span>Total Amount:</span>
-                <span>₹{(selectedOrder.amountPaise / 100).toFixed(2)}</span>
+                <span>{formatINR(selectedOrder.amountPaise / 100)}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-gray-600">Status:</span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Tag, ShoppingBag, TrendingUp } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { formatINR } from '../../CommonFunctions';
 
 interface DashboardStats {
   totalProducts: number;
@@ -64,7 +65,9 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'Revenue',
-      value: `₹${(stats.recentOrders.reduce((sum, order) => sum + (order.amountPaise || 0), 0) / 100).toFixed(2)}`,
+      // value: `₹${(stats.recentOrders.reduce((sum, order) => sum + (order.amountPaise || 0), 0) / 100).toFixed(2)}`,
+      value: formatINR(stats.recentOrders.reduce((sum, order) => sum + (order.amountPaise || 0), 0)),
+
       icon: TrendingUp,
       color: 'bg-orange-500',
     },
@@ -150,7 +153,8 @@ export const Dashboard: React.FC = () => {
                     {order.user?.name || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ₹{((order.amountPaise || 0) / 100).toFixed(2)}
+                    {/* {formatINR((order.amountPaise || 0) / 100).toFixed(2)} */}
+                    {formatINR((order.amountPaise || 0))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
