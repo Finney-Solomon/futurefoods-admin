@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Package, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
-import { Select } from '../ui/Select';
 import { apiService } from '../../services/api';
 import { useToast } from '../ui/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 import { RightDrawerModal } from '../layout/RightDrawerModal';
 import { StatusSelect } from '../StatusSelect';
 import { formatINR } from '../../CommonFunctions';
@@ -14,7 +13,7 @@ interface OrderItem {
     _id: string;
     name: string;
     imageUrl?: string;
-  };
+  } | null;
   quantity: number;
   pricePaise: number;
 }
@@ -25,10 +24,19 @@ interface Order {
     _id: string;
     name: string;
     email: string;
-  };
+  } | null;
   items: OrderItem[];
   amountPaise: number;
   status: 'created' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus?: 'pending' | 'succeeded' | 'failed' | 'processing';
+  paymentDetails?: {
+    last4?: string;
+    brand?: string;
+    expMonth?: number;
+    expYear?: number;
+    errorMessage?: string;
+  };
+  stripePaymentIntentId?: string;
   address: {
     line1: string;
     city: string;
@@ -47,7 +55,10 @@ export const Orders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const toast = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     fetchOrders();
@@ -61,6 +72,94 @@ export const Orders: React.FC = () => {
       toast.error(error.message || 'Failed to fetch orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateOrderInState = (updatedOrder: Order) => {
+    setOrders((prev) =>
+      prev.map((order) => (order._id === updatedOrder._id ? updatedOrder : order)),
+    );
+    setSelectedOrder(updatedOrder);
+  };
+
+  const handleUserCancelOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      setActionLoading(true);
+      const updatedOrder = await apiService.cancelOrder(selectedOrder._id);
+      updateOrderInState(updatedOrder);
+      toast.success('Order cancelled successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to cancel order');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAdminCancelOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      setActionLoading(true);
+      const updatedOrder = await apiService.adminCancelOrder(selectedOrder._id);
+      updateOrderInState(updatedOrder);
+      toast.success('Order cancelled successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to cancel order');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkOrderShipped = async () => {
+    if (!selectedOrder) return;
+    try {
+      setActionLoading(true);
+      const updatedOrder = await apiService.markOrderShipped(selectedOrder._id, {
+        shippingId: selectedOrder._id.slice(-8),
+        carrier: 'Manual',
+        service: 'Standard',
+        trackingUrl: '',
+        estimatedDeliveryAt: new Date().toISOString(),
+        note: 'Marked as shipped from admin panel',
+      });
+      updateOrderInState(updatedOrder);
+      toast.success('Order marked as shipped');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to mark order shipped');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkOrderDelivered = async () => {
+    if (!selectedOrder) return;
+    try {
+      setActionLoading(true);
+      const updatedOrder = await apiService.markOrderDelivered(selectedOrder._id);
+      updateOrderInState(updatedOrder);
+      toast.success('Order marked as delivered');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to mark order delivered');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkPaymentCompleted = async () => {
+    if (!selectedOrder || !selectedOrder.stripePaymentIntentId) return;
+
+    try {
+      setActionLoading(true);
+      const updatedOrder = await apiService.confirmOrderPayment(
+        selectedOrder._id,
+        selectedOrder.stripePaymentIntentId,
+      );
+      updateOrderInState(updatedOrder);
+      toast.success('Payment marked as completed');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to mark payment completed');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -93,8 +192,8 @@ export const Orders: React.FC = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch =
-      order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       order._id.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === '' || order.status === statusFilter;
@@ -248,6 +347,9 @@ export const Orders: React.FC = () => {
                       Amount
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -270,10 +372,10 @@ export const Orders: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {order.user.name}
+                              {order.user?.name || 'Guest User'}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {order.user.email}
+                              {order.user?.email || 'N/A'}
                             </div>
                           </div>
                         </td>
@@ -283,6 +385,16 @@ export const Orders: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatINR(order.amountPaise / 100) || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 capitalize">
+                            {order.paymentStatus || 'pending'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {order.paymentDetails?.brand
+                              ? `${order.paymentDetails.brand.toUpperCase()} • ****${order.paymentDetails.last4 || '0000'}`
+                              : 'N/A'}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -327,17 +439,74 @@ export const Orders: React.FC = () => {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         title={`Order #${selectedOrder?._id.slice(-8)}`}
-      // maxWidth="lg"
       >
         {selectedOrder && (
           <div className="space-y-6">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Order status</p>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                  {selectedOrder.status}
+                </span>
+              </div>
+              <div className="space-x-2">
+                {isAdmin && selectedOrder.status === 'paid' && (
+                  <Button
+                    onClick={handleMarkOrderShipped}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Processing...' : 'Mark Shipped'}
+                  </Button>
+                )}
+                {isAdmin && selectedOrder.status === 'shipped' && (
+                  <Button
+                    onClick={handleMarkOrderDelivered}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Processing...' : 'Mark Delivered'}
+                  </Button>
+                )}
+                {selectedOrder.stripePaymentIntentId && selectedOrder.status !== 'paid' && selectedOrder.status !== 'cancelled' && selectedOrder.paymentStatus !== 'succeeded' && (
+                  <Button
+                    onClick={handleMarkPaymentCompleted}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Processing...' : 'Mark Payment Completed'}
+                  </Button>
+                )}
+                {(isAdmin || selectedOrder.status === 'created') && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && (
+                  <Button
+                    variant="danger"
+                    onClick={isAdmin ? handleAdminCancelOrder : handleUserCancelOrder}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Processing...' : 'Cancel Order'}
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Customer Info */}
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-3">Customer Information</h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                <div><span className="font-medium">Name:</span> {selectedOrder.user.name}</div>
-                <div><span className="font-medium">Email:</span> {selectedOrder.user.email}</div>
+                <div><span className="font-medium">Name:</span> {selectedOrder.user?.name || 'Guest User'}</div>
+                <div><span className="font-medium">Email:</span> {selectedOrder.user?.email || 'N/A'}</div>
                 <div><span className="font-medium">Phone:</span> {selectedOrder.address.phone}</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Payment Details</h3>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div><span className="font-medium">Payment Status:</span> {selectedOrder.paymentStatus || 'pending'}</div>
+                <div><span className="font-medium">Method:</span> {selectedOrder.paymentDetails?.brand ? `${selectedOrder.paymentDetails.brand.toUpperCase()} • ****${selectedOrder.paymentDetails.last4 || '0000'}` : 'N/A'}</div>
+                {selectedOrder.stripePaymentIntentId && (
+                  <div><span className="font-medium">Stripe Payment ID:</span> {selectedOrder.stripePaymentIntentId}</div>
+                )}
+                {selectedOrder.paymentDetails?.errorMessage && (
+                  <div className="text-sm text-red-600">Error: {selectedOrder.paymentDetails.errorMessage}</div>
+                )}
               </div>
             </div>
 
@@ -356,7 +525,7 @@ export const Orders: React.FC = () => {
               <div className="space-y-3">
                 {selectedOrder.items.map((item, index) => (
                   <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                    {item.product.imageUrl ? (
+                    {item.product?.imageUrl ? (
                       <img
                         src={item.product.imageUrl}
                         alt={item.product.name}
@@ -368,7 +537,7 @@ export const Orders: React.FC = () => {
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{item.product.name}</div>
+                      <div className="font-medium text-gray-900">{item.product?.name || 'Product Unavailable'}</div>
                       <div className="text-sm text-gray-500">
                         Quantity: {item.quantity} × {formatINR(item.pricePaise / 100)}
                       </div>

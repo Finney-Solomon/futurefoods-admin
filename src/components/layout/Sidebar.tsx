@@ -8,7 +8,8 @@ import {
   Store,
   ShoppingCart,
   FileText,
-  UtensilsCrossed
+  UtensilsCrossed,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -24,6 +25,7 @@ const navigation = [
   { id: 'orders', name: 'Orders', icon: ShoppingCart },
   { id: 'blogs', name: 'Blogs', icon: FileText },
   { id: 'recipes', name: 'Recipes', icon: UtensilsCrossed },
+  { id: 'reviews', name: 'Reviews', icon: MessageSquare },
 ];
 
 

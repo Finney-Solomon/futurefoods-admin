@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -39,7 +39,7 @@ export interface Order {
   user: User;
   items: OrderItem[];
   amountPaise: number;
-  status: 'created' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  status: "created" | "paid" | "shipped" | "delivered" | "cancelled";
   address: {
     line1: string;
     city: string;
@@ -62,10 +62,15 @@ export interface ApiError {
   status?: number;
 }
 
-
 // --- Blogs ---
 
-export type BlogBlockType = 'section' | 'image' | 'quote' | 'list' | 'html' | 'markdown';
+export type BlogBlockType =
+  | "section"
+  | "image"
+  | "quote"
+  | "list"
+  | "html"
+  | "markdown";
 
 export interface BlogImage {
   url: string;
@@ -80,34 +85,34 @@ export interface BlogList {
 /** Discriminated union for content blocks */
 export type BlogBlock =
   | {
-      type: 'section';
+      type: "section";
       subheading?: string;
       body?: string[]; // paragraphs
     }
   | {
-      type: 'image';
+      type: "image";
       image: BlogImage;
     }
   | {
-      type: 'quote';
+      type: "quote";
       quote: string;
       cite?: string;
     }
   | {
-      type: 'list';
+      type: "list";
       list: BlogList;
       subheading?: string;
     }
   | {
-      type: 'html';
+      type: "html";
       html: string;
     }
   | {
-      type: 'markdown';
+      type: "markdown";
       markdown: string;
     };
 
-export type BlogStatus = 'draft' | 'published';
+export type BlogStatus = "draft" | "published";
 
 export interface BlogSEO {
   title?: string;
@@ -123,7 +128,7 @@ export interface BlogAuthor {
 export interface Blog {
   _id: string;
   heading: string;
-  description: string[];     // intro paragraphs
+  description: string[]; // intro paragraphs
   slug: string;
   coverImage?: string;
   content: BlogBlock[];
@@ -134,8 +139,8 @@ export interface Blog {
   publishedAt?: string | null;
 
   // flags
-  mainBlog: boolean;         // featured at top
-  isActive: boolean;         // soft-delete flag
+  mainBlog: boolean; // featured at top
+  isActive: boolean; // soft-delete flag
   inactiveAt?: string | null;
 
   seo?: BlogSEO;
@@ -175,8 +180,14 @@ export interface Paginated<T> {
 
 /** Common blog API responses */
 export type BlogListResponse = Paginated<Blog>;
-export interface BlogDeleteResponse { message: string; post: Blog; }
-export interface BlogRestoreResponse { message: string; post: Blog; }
+export interface BlogDeleteResponse {
+  message: string;
+  post: Blog;
+}
+export interface BlogRestoreResponse {
+  message: string;
+  post: Blog;
+}
 
 /** Public query params */
 export interface BlogPublicQuery {
@@ -190,9 +201,8 @@ export interface BlogPublicQuery {
 /** Admin query params */
 export interface BlogAdminQuery extends BlogPublicQuery {
   includeInactive?: boolean; // default false
-  allStatus?: boolean;       // default false (otherwise only published)
+  allStatus?: boolean; // default false (otherwise only published)
 }
-
 
 export type Recipe = {
   _id: string;
@@ -212,3 +222,38 @@ export type Recipe = {
   createdAt: string;
   updatedAt: string;
 };
+
+// --- Reviews ---
+
+export interface Review {
+  _id: string;
+  reviewerName: string;
+  user?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  title?: string;
+  comment: string;
+  rating: number;
+  imageUrl?: string;
+  isVisible: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewCreate {
+  reviewerName: string;
+  user?: string; // user ID
+  title?: string;
+  comment: string;
+  rating: number;
+  imageUrl?: string;
+  isVisible?: boolean;
+  isActive?: boolean;
+}
+
+export type ReviewUpdate = Partial<ReviewCreate>;
+
+export type ReviewListResponse = Paginated<Review>;
