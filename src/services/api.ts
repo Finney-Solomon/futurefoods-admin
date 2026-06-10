@@ -190,7 +190,8 @@ class ApiService {
   // ---- Orders ----
   async getOrders() {
     const res = await this.request<any>("/orders");
-    return res?.data || res || [];
+    const orders = res?.data ?? res?.orders ?? res?.items ?? res;
+    return Array.isArray(orders) ? orders : [];
   }
 
   async getOrder(orderId: string) {

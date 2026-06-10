@@ -37,13 +37,13 @@ interface Order {
     errorMessage?: string;
   };
   stripePaymentIntentId?: string;
-  address: {
+  address?: {
     line1: string;
     city: string;
     state: string;
     pin: string;
     phone: string;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -190,11 +190,21 @@ export const Orders: React.FC = () => {
     setIsViewModalOpen(true);
   };
 
+  const getOrderId = (order: Order) => order._id || '';
+  const getOrderItems = (order: Order) => Array.isArray(order.items) ? order.items : [];
+  const formatDate = (date?: string) => {
+    if (!date) return 'N/A';
+    const parsedDate = new Date(date);
+    return Number.isNaN(parsedDate.getTime()) ? 'N/A' : parsedDate.toLocaleDateString();
+  };
+
   const filteredOrders = orders.filter(order => {
+    const orderId = getOrderId(order).toLowerCase();
+    const search = searchTerm.toLowerCase();
     const matchesSearch =
-      (order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      order._id.toLowerCase().includes(searchTerm.toLowerCase());
+      (order.user?.name?.toLowerCase().includes(search) ?? false) ||
+      (order.user?.email?.toLowerCase().includes(search) ?? false) ||
+      orderId.includes(search);
 
     const matchesStatus = statusFilter === '' || order.status === statusFilter;
 
@@ -367,7 +377,7 @@ export const Orders: React.FC = () => {
                     return (
                       <tr key={order._id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{order._id.slice(-8)}
+                          #{getOrderId(order).slice(-8) || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -380,11 +390,11 @@ export const Orders: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.items.length} item
-                          {order.items.length !== 1 ? 's' : ''}
+                          {getOrderItems(order).length} item
+                          {getOrderItems(order).length !== 1 ? 's' : ''}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatINR(order.amountPaise / 100) || 0}
+                          {formatINR(order.amountPaise) || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 capitalize">
@@ -407,7 +417,7 @@ export const Orders: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {formatDate(order.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <Button
@@ -438,7 +448,7 @@ export const Orders: React.FC = () => {
       <RightDrawerModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={`Order #${selectedOrder?._id.slice(-8)}`}
+        title={`Order #${selectedOrder ? getOrderId(selectedOrder).slice(-8) || 'N/A' : ''}`}
       >
         {selectedOrder && (
           <div className="space-y-6">
@@ -492,7 +502,7 @@ export const Orders: React.FC = () => {
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 <div><span className="font-medium">Name:</span> {selectedOrder.user?.name || 'Guest User'}</div>
                 <div><span className="font-medium">Email:</span> {selectedOrder.user?.email || 'N/A'}</div>
-                <div><span className="font-medium">Phone:</span> {selectedOrder.address.phone}</div>
+                <div><span className="font-medium">Phone:</span> {selectedOrder.address?.phone || 'N/A'}</div>
               </div>
             </div>
 
@@ -514,8 +524,11 @@ export const Orders: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-3">Shipping Address</h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <div>{selectedOrder.address.line1}</div>
-                <div>{selectedOrder.address.city}, {selectedOrder.address.state} - {selectedOrder.address.pin}</div>
+                <div>{selectedOrder.address?.line1 || 'N/A'}</div>
+                <div>
+                  {[selectedOrder.address?.city, selectedOrder.address?.state].filter(Boolean).join(', ') || 'N/A'}
+                  {selectedOrder.address?.pin ? ` - ${selectedOrder.address.pin}` : ''}
+                </div>
               </div>
             </div>
 
@@ -523,7 +536,7 @@ export const Orders: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-3">Order Items</h3>
               <div className="space-y-3">
-                {selectedOrder.items.map((item, index) => (
+                {getOrderItems(selectedOrder).map((item, index) => (
                   <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                     {item.product?.imageUrl ? (
                       <img
@@ -539,12 +552,12 @@ export const Orders: React.FC = () => {
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{item.product?.name || 'Product Unavailable'}</div>
                       <div className="text-sm text-gray-500">
-                        Quantity: {item.quantity} × {formatINR(item.pricePaise / 100)}
+                        Quantity: {item.quantity} × {formatINR(item.pricePaise)}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">
-                        {formatINR((item.quantity * item.pricePaise) / 100)}
+                        {formatINR(item.quantity * item.pricePaise)}
                       </div>
                     </div>
                   </div>
@@ -556,7 +569,7 @@ export const Orders: React.FC = () => {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center text-lg font-semibold">
                 <span>Total Amount:</span>
-                <span>{formatINR(selectedOrder.amountPaise / 100)}</span>
+                <span>{formatINR(selectedOrder.amountPaise)}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-gray-600">Status:</span>
